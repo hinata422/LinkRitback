@@ -5,7 +5,6 @@
   "author": "",
   "private": true,
   "license": "UNLICENSED",
-
   "scripts": {
     "dev": "npm run start:dev",
     "build": "nest build",
@@ -28,7 +27,7 @@
     "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^11.0.1",
     "@nestjs/platform-express": "^11.0.1",
-    "@supabase/supabase-js": "^2.86.2",
+    "@supabase/supabase-js": "^2.87.1",
     "langchain": "^1.1.2",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1"
