@@ -11,7 +11,7 @@ export class EventController {
   }
 
   @Get(':event_id')
-  async getEventDetail(@Param('event_id') event_id: string) {
+  async getEventDetail(@Param('event_id') event_id: number) {
     return await this.eventService.getEventDetail(event_id);
   }
 }

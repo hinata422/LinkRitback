@@ -1,12 +1,23 @@
 import { Injectable } from '@nestjs/common';
-import { supabaseClient } from '../../../lib/supabase/supabase.client';
+import { SupabaseClient } from '@supabase/supabase-js';
+import { EventRepository } from '../event.repo';
+
 
 @Injectable()
-export class EventRepositoryImpl {
-  private supabase = supabaseClient(); // ← ここに移動（必須）
+export class EventRepositoryImpl extends EventRepository {
+  constructor(supabaseClient: SupabaseClient){
+    super(supabaseClient);
+  }
 
+  async bulkInsert(events: any[]): Promise<void> {
+    const { error } = await this.client
+      .from('events')
+      .insert(events);
+    
+    if (error) throw error;
+  }
   async findAll() {
-    const { data, error } = await this.supabase
+    const { data, error } = await this.client
       .from('events')
       .select('*');
 
@@ -14,8 +25,8 @@ export class EventRepositoryImpl {
     return data;
   }
 
-  async findById(event_id: string) {
-    const { data, error } = await this.supabase
+  async findById(event_id: number) {
+    const { data, error } = await this.client
       .from('events')
       .select('*')
       .eq('event_id', event_id)

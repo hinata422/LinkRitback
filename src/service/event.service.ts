@@ -9,7 +9,7 @@ export class EventService {
     return await this.eventRepo.findAll();
   }
 
-  async getEventDetail(event_id: string) {
+  async getEventDetail(event_id: number) {
     return await this.eventRepo.findById(event_id);
   }
 }

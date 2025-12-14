@@ -1,15 +1,19 @@
 import { Injectable } from '@nestjs/common';
-import { supabaseClient } from '../../../lib/supabase/supabase.client';
+import { SupabaseClient, User } from '@supabase/supabase-js';
+import { UserRepository } from '../user.repo';
+
 
 @Injectable()
-export class UserRepositoryImpl {
-  private supabase = supabaseClient(); // ← supabase の初期化をここで行う
+export class UserRepositoryImpl extends UserRepository {
+  constructor(supabaseClient: SupabaseClient){
+    super(supabaseClient);
+  }
 
-  async findBySub(sub: string) {
-    const { data, error } = await this.supabase
+  async findById(id: number) {
+    const { data, error } = await this.client
       .from('users')
       .select('*')
-      .eq('auth0Id', sub)
+      .eq('auth0Id', id)
       .single();
 
     if (error) throw error;
@@ -17,7 +21,7 @@ export class UserRepositoryImpl {
   }
 
   async create(user: any) {
-    const { data, error } = await this.supabase
+    const { data, error } = await this.client
       .from('users')
       .insert(user)
       .select()
@@ -27,8 +31,8 @@ export class UserRepositoryImpl {
     return data;
   }
 
-  async update(sub: string, user: any) {
-    const { data, error } = await this.supabase
+  async update(sub: number, user: any) {
+    const { data, error } = await this.client
       .from('users')
       .update(user)
       .eq('auth0Id', sub)

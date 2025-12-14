@@ -7,26 +7,26 @@ export class UserController {
 
   // 初回ログイン判定API
   @Get('check/:auth0Id')
-  async check(@Param('auth0Id') auth0Id: string) {
+  async check(@Param('auth0Id') auth0Id: number) {
     // Auth: そのまま auth0Id を使用
-    return await this.userService.checkUser(auth0Id);
+    return await this.userService.check(auth0Id);
   }
 
   @Post()
   async create(@Body() body: any) {
     // Auth: リクエストは auth0Id を前提に受け付ける
-    return await this.userService.createUser(body);
+    return await this.userService.create(body);
   }
 
   @Get(':auth0Id')
-  async getOne(@Param('auth0Id') auth0Id: string) {
+  async getOne(@Param('auth0Id') auth0Id: number) {
     // Auth: auth0Id で検索
-    return await this.userService.getUser(auth0Id);
+    return await this.userService.get(auth0Id);
   }
 
   @Put(':auth0Id')
-  async update(@Param('auth0Id') auth0Id: string, @Body() body: any) {
+  async update(@Param('auth0Id') auth0Id: number, @Body() body: any) {
     // Auth: auth0Id で更新。body は auth0Id 前提
-    return await this.userService.updateUser(auth0Id, body);
+    return await this.userService.update(auth0Id, body);
   }
 }

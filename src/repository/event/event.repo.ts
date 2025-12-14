@@ -1,5 +1,10 @@
-export interface EventRepository {
-  bulkUpsert(events: any[]): Promise<void>;
-  findAll(): Promise<any[]>;
-  findById(event_id: string): Promise<any>;
+import { SupabaseClient } from '@supabase/supabase-js';
+export  abstract class EventRepository  {
+  protected client: SupabaseClient;
+  constructor(supabaseClient: SupabaseClient){
+    this.client = supabaseClient;
+  };
+  abstract bulkInsert(events: any[]): Promise<void>;
+  abstract findAll(): Promise<any[]>;
+  abstract findById(event_id: number): Promise<any>;
 }
