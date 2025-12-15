@@ -6,12 +6,12 @@ export class EventController {
   constructor(private readonly eventService: EventService) {}
 
   @Get()
-  async listEvents() {
-    return await this.eventService.getAllEvents();
+  async allEvents() {
+    return await this.eventService.getAll();
   }
 
   @Get(':event_id')
-  async getEventDetail(@Param('event_id') event_id: number) {
-    return await this.eventService.getEventDetail(event_id);
+  async get(@Param('event_id') event_id: number) {
+    return await this.eventService.get(event_id);
   }
 }

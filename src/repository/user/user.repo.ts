@@ -5,6 +5,6 @@ export abstract class UserRepository  {
     this.client = supabaseClient;
   };
   abstract create(user: any): Promise<any>;
-  abstract findById(id: number): Promise<any>;
-  abstract update(id: number, data: any): Promise<any>;
+  abstract findByAuth0Id(id: string): Promise<any>;
+  abstract update(id: string, data: any): Promise<any>;
 }

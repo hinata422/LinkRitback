@@ -9,7 +9,7 @@ export class UserRepositoryImpl extends UserRepository {
     super(supabaseClient);
   }
 
-  async findById(id: number) {
+  async findByAuth0Id(id: string) {
     const { data, error } = await this.client
       .from('users')
       .select('*')
@@ -31,7 +31,7 @@ export class UserRepositoryImpl extends UserRepository {
     return data;
   }
 
-  async update(sub: number, user: any) {
+  async update(sub: string, user: any) {
     const { data, error } = await this.client
       .from('users')
       .update(user)
