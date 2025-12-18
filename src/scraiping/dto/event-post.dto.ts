@@ -1,4 +1,10 @@
-import { IsString, IsNotEmpty, IsDate, IsOptional, IsUUID } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsDate,
+  IsOptional,
+  IsUUID,
+} from 'class-validator';
 
 export class CreateEventPostDto {
   @IsUUID()
