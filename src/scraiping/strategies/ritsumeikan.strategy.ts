@@ -19,22 +19,22 @@ export class RitsumeikanStrategy implements IScraperStrategy {
     this.logger.log(`Start scraping: ${url}`);
 
     try {
-      const { data } = await axios.get(url);
+      const { data } = await axios.get<string>(url);
       const $ = cheerio.load(data);
       const events: CreateEventPostDto[] = [];
 
       // サイトの構造に合わせてセレクタ（.event-itemなど）は調整が必要です
       $('.event-list__item').each((index, element) => {
         const title = $(element).find('.event-list__title').text().trim();
-        const dateStr = $(element).find('.event-list__date').text().trim();
         const link = $(element).find('a').attr('href');
         const detailText = $(element).find('.event-list__text').text().trim();
 
         if (!title) return;
 
         // URLが相対パスの場合は補完する
-        const fullLink = link && !link.startsWith('http')
-            ? `https://www.ritsumei.ac.jp${link}` 
+        const fullLink =
+          link && !link.startsWith('http')
+            ? `https://www.ritsumei.ac.jp${link}`
             : link;
 
         const eventDto: CreateEventPostDto = {
@@ -54,7 +54,11 @@ export class RitsumeikanStrategy implements IScraperStrategy {
 
       return events;
     } catch (error) {
-      this.logger.error(`Scraping failed: ${error.message}`);
+      if (error instanceof Error) {
+        this.logger.error(`Scraping failed: ${error.message}`);
+      } else {
+        this.logger.error('Scraping failed with unknown error');
+      }
       throw error;
     }
   }
