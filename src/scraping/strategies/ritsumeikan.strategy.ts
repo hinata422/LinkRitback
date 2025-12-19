@@ -18,8 +18,6 @@ export class RitsumeikanStrategy implements IScraperStrategy {
     this.logger.log(`Start scraping: ${url}`);
 
     try {
-      // 1. HTMLを取得
-      // User-Agentを指定しないと弾かれることがあるため設定
       const { data } = await axios.get<string>(url, {
         headers: {
           'User-Agent':
@@ -31,74 +29,100 @@ export class RitsumeikanStrategy implements IScraperStrategy {
       const events: CreateEventPostDto[] = [];
       const now = new Date();
 
-      // 2. 抽出ロジックの修正
-      // 立命館のイベントページでよくある構造を広範囲に探す
-      // (ul.list-news > li, .news-list > li など)
       $('a').each((_index, element) => {
         const linkElement = $(element);
         const title = linkElement.text().trim();
         const href = linkElement.attr('href');
 
-        // タイトルが短すぎる、またはリンクがない場合はスキップ
+        // 1. 基本チェック
         if (!title || title.length < 5 || !href) return;
 
-        // イベント詳細ページへのリンクか判定 (URLに 'event' や 'news' が含まれるか)
-        if (!href.includes('event') && !href.includes('news')) return;
+        // 2. 除外キーワード (ここを強化しました！)
+        const ignoreWords = [
+          '一覧',
+          '検索',
+          'カテゴリ',
+          'アーカイブ',
+          'HOME',
+          'Top',
+          '講義・講座',
+          'すべての',
+          'キャンパス',
+        ];
+        if (ignoreWords.some((word) => title.includes(word))) return;
 
-        // PDFファイルは除外（解析が難しいため）
-        if (href.endsWith('.pdf')) return;
+        // 3. URLチェック (不要なパラメータ付きを除外)
+        if (
+          href.includes('tag=') ||
+          href.includes('year=') ||
+          href.includes('cat=') ||
+          href.endsWith('.pdf')
+        )
+          return;
+
+        // イベント詳細っぽいURLだけを通す
+        if (
+          !href.includes('event') &&
+          !href.includes('news') &&
+          !href.includes('detail')
+        )
+          return;
 
         // URLの補完
         const fullLink = href.startsWith('http')
           ? href
           : href.startsWith('/')
             ? `https://www.ritsumei.ac.jp${href}`
-            : `https://www.ritsumei.ac.jp/${href}`; // 相対パスの調整
+            : `https://www.ritsumei.ac.jp/${href}`;
 
-        // 日付情報の抽出（近くにある .date 要素を探す）
-        // 構造: <li> <span class="date">2024.12.20</span> <a ...>Title</a> </li>
-        const parentLi = linkElement.closest('li');
-        const dateText = parentLi.find('.date, time').text().trim(); // クラス名はサイトによる
+        // 4. 日付抽出の強化
+        // リンクの親要素や、その近くにある日付を探す
+        // パターン: 2024.12.20 や 2024/12/20
+        let dateText = '';
+        const parent = linkElement.parent();
+        const nearbyText =
+          parent.text() + parent.prev().text() + parent.next().text(); // 前後も含めて探す
 
-        // 日付パース (YYYY.MM.DD 形式を想定)
+        const dateMatch = nearbyText.match(
+          /(\d{4})[./-](\d{1,2})[./-](\d{1,2})/,
+        );
+
         let eventDate = now;
-        if (dateText) {
-          const dateMatch = dateText.match(
-            /(\d{4})[./-](\d{1,2})[./-](\d{1,2})/,
+        if (dateMatch) {
+          dateText = dateMatch[0];
+          eventDate = new Date(
+            parseInt(dateMatch[1]),
+            parseInt(dateMatch[2]) - 1,
+            parseInt(dateMatch[3]),
           );
-          if (dateMatch) {
-            eventDate = new Date(
-              parseInt(dateMatch[1]),
-              parseInt(dateMatch[2]) - 1,
-              parseInt(dateMatch[3]),
-            );
-          }
+        } else {
+          // 日付が見つからないイベントは信頼性が低いので今回はスキップする（設定による）
+          // 今回は「日付不明」として保存は許可します
         }
-
-        const postLimitDate = new Date(eventDate);
-        postLimitDate.setDate(postLimitDate.getDate() + 30);
 
         const eventDto: CreateEventPostDto = {
           id: uuidv4(),
           uid: this.SYSTEM_USER_ID,
-          title: title.substring(0, 100), // 長すぎるとDBエラーになるのでカット
+          title: title.substring(0, 100),
           category: 'University Event',
           postTime: eventDate,
-          postLimit: postLimitDate,
+          postLimit: new Date(
+            new Date(eventDate).setDate(eventDate.getDate() + 30),
+          ),
           place: '立命館大学 (詳細はリンク参照)',
-          detail: `イベント情報を見つけました。\n\n📅 日付: ${dateText || '不明'}\n🔗 詳細: ${fullLink}`,
+          detail: `【イベント検出】\n📅 日付: ${dateText || 'サイトで確認してください'}\n🔗 詳細URL: ${fullLink}`,
           chatRoomId: uuidv4(),
         };
 
         events.push(eventDto);
       });
 
-      // 重複排除 (同じURLのイベントは1つにする)
+      // タイトルでの重複排除
       const uniqueEvents = Array.from(
         new Map(events.map((e) => [e.title, e])).values(),
       );
 
-      this.logger.log(`Found ${uniqueEvents.length} events.`);
+      this.logger.log(`Found ${uniqueEvents.length} valid events.`);
       return uniqueEvents;
     } catch (error) {
       if (error instanceof Error) {
