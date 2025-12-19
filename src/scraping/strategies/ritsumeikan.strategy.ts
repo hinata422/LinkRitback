@@ -69,10 +69,9 @@ export class RitsumeikanStrategy implements IScraperStrategy {
               ? `https://www.ritsumei.ac.jp${link}`
               : `https://www.ritsumei.ac.jp/${link}`;
 
-          // 二重スラッシュの修正 (http://...//... となるのを防ぐ)
+          // 二重スラッシュの修正
           fullLink = fullLink.replace(/([^:]\/)\/+/g, '$1');
 
-          // 自分自身（一覧ページ）は除外
           if (
             fullLink === url ||
             fullLink === 'https://www.ritsumei.ac.jp/events/'
@@ -90,7 +89,6 @@ export class RitsumeikanStrategy implements IScraperStrategy {
       );
 
       const events: CreateEventPostDto[] = [];
-      // 負荷対策: 最新15件
       const targetUrls = uniqueUrls.slice(0, 15);
 
       for (const detailUrl of targetUrls) {
@@ -126,8 +124,18 @@ export class RitsumeikanStrategy implements IScraperStrategy {
     });
     const $ = cheerio.load(data);
 
-    // ▼▼▼ クリーニング処理 ▼▼▼
-    $('script, style, iframe, noscript, header, footer, nav').remove();
+    // ▼▼▼ DOMレベルでの削除 ▼▼▼
+    $('script, style, iframe, noscript, header, footer, nav, aside').remove();
+    // Google Tag Managerなどはdivで囲まれていることがあるので、中身がJSっぽい要素を狙い撃ち
+    $('div').each((_, el) => {
+      const text = $(el).text();
+      if (
+        text.includes('googletagmanager') ||
+        text.includes('function(w,d,s')
+      ) {
+        $(el).remove();
+      }
+    });
 
     let title = $('h1').first().text().trim();
     if (!title) {
@@ -135,10 +143,20 @@ export class RitsumeikanStrategy implements IScraperStrategy {
     }
     if (!title) return null;
 
-    // 本文取得 (余分な空白を除去)
-    const bodyText = $('body').text().replace(/\s+/g, ' ').trim();
+    // 本文取得
+    let bodyText = $('body').text().replace(/\s+/g, ' ').trim();
+
+    // ▼▼▼ テキストレベルでの強力な削除 (ここを追加！) ▼▼▼
+    // 残ってしまったJSコードやiframeタグのような文字列を正規表現で削除
+    bodyText = bodyText.replace(/<iframe.*?<\/iframe>/g, '');
+    bodyText = bodyText.replace(
+      /\(function\(w,d,s,l,i\).*?\}\)\(window,document,'script'.*?\);/g,
+      '',
+    );
+    bodyText = bodyText.replace(/googletagmanager/g, '');
 
     // 日付抽出
+    // eslint-disable-next-line no-useless-escape
     const dateRegex = /(\d{4})[\s./-年](\d{1,2})[\s./-月](\d{1,2})/;
     const dateMatch = bodyText.match(dateRegex);
 
@@ -157,7 +175,6 @@ export class RitsumeikanStrategy implements IScraperStrategy {
       }
     }
 
-    // 場所抽出
     let place = '立命館大学';
     if (bodyText.includes('大阪いばらき') || bodyText.includes('OIC')) {
       place = '大阪いばらきキャンパス (OIC)';
