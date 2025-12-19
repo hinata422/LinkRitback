@@ -24,21 +24,12 @@ export class EventController {
     }
     const events = await this.eventService.list(mbti);
 
-    // 各イベントにdetail_editedを追加
-    const eventsWithEdited = await Promise.all(
-      events.map(async (event: any) => {
-        const editedList = await this.eventEditedService.getByEventId(event.id);
-        const filtered = editedList.filter((item: any) => item.mbti_type === mbti);
-
-        return {
-          title: event.title,
-          place: event.place,
-          detail_edited: filtered.length > 0 ? filtered[0].detail_edited : null,
-        };
-      })
-    );
-
-    return eventsWithEdited;
+    // ホーム画面では event_id, title, place のみ
+    return events.map((event: any) => ({
+      event_id: event.id,
+      title: event.title,
+      place: event.place,
+    }));
   }
 
   /**
@@ -65,6 +56,7 @@ export class EventController {
     }
 
     return {
+      event_mbti_id: eventMbtiId,
       title: event.title,
       place: event.place,
       detail_edited: detailEdited,
