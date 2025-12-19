@@ -155,6 +155,15 @@ export class RitsumeikanStrategy implements IScraperStrategy {
     );
     bodyText = bodyText.replace(/googletagmanager/g, '');
 
+    // ▼▼▼ テキスト量チェック (追加) ▼▼▼
+    // 文字数が少なすぎる場合は「詳細が取れなかった」とみなしてスキップ
+    if (bodyText.length < 100) {
+      this.logger.warn(
+        `⚠️ Skipped: Not enough detail text (${bodyText.length} chars) - ${url}`,
+      );
+      return null;
+    }
+
     // 日付抽出
     // eslint-disable-next-line no-useless-escape
     const dateRegex = /(\d{4})[\s./-年](\d{1,2})[\s./-月](\d{1,2})/;
