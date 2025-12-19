@@ -1,11 +1,11 @@
 import { Inject, Injectable } from '@nestjs/common';
-import type { UserRepository } from '../repository/user/user.repo';
-import { USER_REPOSITORY } from '../tokens';
+import { UserRepository } from '../repository/user/user.repo';
+import { TYPES } from '../../common/Types';
 
 @Injectable()
 export class UserService {
   constructor(
-    @Inject(USER_REPOSITORY)
+    @Inject(TYPES.UserRepository)
     private readonly userRepo: UserRepository,
   ) {}
 

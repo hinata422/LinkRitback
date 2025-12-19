@@ -8,12 +8,12 @@ import { EventService } from './service/event.service';
 import { EventRepositoryImpl } from './repository/event/psql/event.repo.impl';
 import { supabaseClient } from './main';
 import { SupabaseClient } from '@supabase/supabase-js';
-import { EVENT_REPOSITORY, USER_REPOSITORY } from './tokens';
+import { TYPES } from '../common/Types';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
-      isGlobal: true, // ← これで全ファイルから.env が使える
+      isGlobal: true,
     }),
   ],
   controllers: [UserController, EventController],
@@ -23,16 +23,16 @@ import { EVENT_REPOSITORY, USER_REPOSITORY } from './tokens';
       useValue: supabaseClient,
     },
     {
-      provide: EVENT_REPOSITORY,
+      provide: TYPES.EventRepository,
       useClass: EventRepositoryImpl,
     },
     {
-      provide: USER_REPOSITORY,
+      provide: TYPES.UserRepository,
       useClass: UserRepositoryImpl,
     },
     UserService,
     EventService,
   ],
-  exports: [EVENT_REPOSITORY, USER_REPOSITORY],
+  exports: [TYPES.EventRepository, TYPES.UserRepository],
 })
-export class AppModule { }
+export class AppModule {}
