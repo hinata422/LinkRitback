@@ -24,7 +24,7 @@ export class RitsumeikanStrategy implements IScraperStrategy {
       const events: CreateEventPostDto[] = [];
 
       // サイトの構造に合わせてセレクタ（.event-itemなど）は調整が必要です
-      $('.event-list__item').each((index, element) => {
+      $('.event-list__item').each((_index, element) => {
         const title = $(element).find('.event-list__title').text().trim();
         const link = $(element).find('a').attr('href');
         const detailText = $(element).find('.event-list__text').text().trim();
