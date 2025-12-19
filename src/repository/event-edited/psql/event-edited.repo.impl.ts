@@ -18,4 +18,17 @@ export class EventEditedRepositoryImpl implements EventEditedRepository {
         if (error) throw error;
         return data || [];
     }
+
+    async upsert(data: { events_id: string; mbti_type: string; detail_edited: string }) {
+        const { data: result, error } = await this.client
+            .from('events_edited')
+            .upsert(data, {
+                onConflict: 'events_id,mbti_type',
+            })
+            .select()
+            .single();
+
+        if (error) throw error;
+        return result;
+    }
 }
