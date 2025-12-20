@@ -30,9 +30,9 @@ async function main() {
 
     try {
         // 0. RESET DB (Clear data to test from scratch)
-        console.log('🧹 Clearing DB tables (CategoryOfRoom -> EventMbti / EventPost -> Event) ...');
+        console.log('🧹 Clearing DB tables (EventMbti / EventPost -> Event) ...');
         // Delete in order to avoid foreign key constraints
-        await prisma.categoryOfRoom.deleteMany({});
+        // await prisma.categoryOfRoom.deleteMany({}); // Schemaから削除されたため
         await prisma.eventMbti.deleteMany({});
         await prisma.eventPost.deleteMany({});
         await prisma.event.deleteMany({});
@@ -59,6 +59,16 @@ async function main() {
         const countAfterRun1 = await prisma.event.count();
         console.log(`📊 Event Count after Run 1: ${countAfterRun1}`);
 
+        // STRICT SUCCESS CHECK
+        if (countAfterRun1 === 0) {
+            console.error('❌ FAILURE: Run 1 completed but NO events were saved to DB.');
+            console.error('   Possible causes: Transaction failure, Unique constraint violations, or Silent errors in saveEvents.');
+            // Check if User exists
+            const systemUser = await prisma.user.findUnique({ where: { id: '00000000-0000-0000-0000-000000000000' } });
+            console.log(`   System User Exists? ${!!systemUser}`);
+            return;
+        }
+
         if (countAfterRun1 > 0) {
             console.log('\n🔍 Verifying Date Fields for the first saved event:');
             const firstEvent = await prisma.event.findFirst();
@@ -69,8 +79,8 @@ async function main() {
                 console.log(`   Start At: ${firstEvent.startAt.toISOString()} (Local: ${firstEvent.startAt.toLocaleString()})`);
                 console.log(`   End At:   ${firstEvent.endAt.toISOString()}   (Local: ${firstEvent.endAt.toLocaleString()})`);
                 console.log(`   Scraped At: ${firstEvent.scrapedAt.toISOString()}`);
-                console.log(`   Created At: ${firstEvent.createdAt.toISOString()}`);
-                console.log(`   Updated At: ${firstEvent.updatedAt.toISOString()}`);
+                // console.log(`   Created At: ${firstEvent.createdAt.toISOString()}`);
+                // console.log(`   Updated At: ${firstEvent.updatedAt.toISOString()}`);
             }
         }
 

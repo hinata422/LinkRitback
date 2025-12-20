@@ -12,8 +12,8 @@ export class CreateEventPostDto {
   id?: string;
 
   @IsUUID()
-  @IsNotEmpty()
-  uid: string; // システムユーザー等のID
+  @IsOptional()
+  uid?: string; // システムユーザー等のID (Serviceで補完)
 
   @IsString()
   @IsNotEmpty()
@@ -21,7 +21,7 @@ export class CreateEventPostDto {
 
   @IsString()
   @IsOptional()
-  category: string; // スクレイピングで取れない場合はデフォルト値など
+  category?: string; // スクレイピングで取れない場合はデフォルト値など
 
   @IsDate()
   @IsNotEmpty()
@@ -33,13 +33,13 @@ export class CreateEventPostDto {
 
   @IsString()
   @IsOptional()
-  place: string;
+  place?: string;
 
   @IsString()
-  @IsNotEmpty()
-  detail: string;
+  @IsOptional() // Serviceで補完
+  detail?: string;
 
   @IsUUID()
-  @IsNotEmpty()
-  chatRoomId: string; // 新規生成したUUIDを入れる
+  @IsOptional() // Serviceで補完
+  chatRoomId?: string; // 新規生成したUUIDを入れる
 }
