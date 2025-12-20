@@ -9,7 +9,7 @@ export class EventsService {
   // システムユーザーの固定ID (環境変数で管理することを推奨)
   private readonly SYSTEM_USER_UID = '00000000-0000-0000-0000-000000000000';
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
 
   async saveEvents(eventDtos: CreateEventPostDto[]): Promise<void> {
     if (eventDtos.length === 0) return;
@@ -34,32 +34,55 @@ export class EventsService {
             },
           });
 
-          // 2. イベントマスタの作成 (Eventテーブル)
-          const event = await tx.event.create({
-            data: {
+          // 2. イベントマスタの作成・取得 (Eventテーブル)
+          // 重複チェック: タイトルと開始日時が一致するイベントがあれば既存のものを使う
+          const existingEvent = await tx.event.findFirst({
+            where: {
               title: dto.title,
-              place: dto.place || '未定',
-              detail: dto.detail,
-              scrapedAt: new Date(),
-              startAt: dto.postTime, // 開始日時
-              endAt: dto.postLimit, // 終了日時
-              dateText: dto.postTime.toISOString(),
+              startAt: dto.postTime,
             },
           });
 
+          let eventId = existingEvent?.id;
+
+          if (!existingEvent) {
+            const newEvent = await tx.event.create({
+              data: {
+                title: dto.title,
+                place: dto.place || '未定',
+                detail: dto.detail,
+                scrapedAt: new Date(),
+                startAt: dto.postTime, // 開始日時
+                endAt: dto.postLimit, // 終了日時
+                dateText: dto.postTime.toISOString(),
+              },
+            });
+            eventId = newEvent.id;
+          }
+
           // 3. イベント投稿の作成 (EventPostテーブル)
-          await tx.eventPost.create({
-            data: {
+          // 既存の投稿があるかチェック (同じユーザー、同じイベント)
+          const existingPost = await tx.eventPost.findFirst({
+            where: {
               userId: this.SYSTEM_USER_UID,
-              eventId: event.id, // 作成したイベントと紐付け
-              title: dto.title,
-              place: dto.place || '未定',
-              detail: dto.detail,
-              postTime: new Date(),
-              postLimit: dto.postLimit,
-              chatRoomId: dto.chatRoomId || uuidv4(),
+              eventId: eventId,
             },
           });
+
+          if (!existingPost && eventId) {
+            await tx.eventPost.create({
+              data: {
+                userId: this.SYSTEM_USER_UID,
+                eventId: eventId, // イベントID
+                title: dto.title,
+                place: dto.place || '未定',
+                detail: dto.detail,
+                postTime: new Date(),
+                postLimit: dto.postLimit,
+                chatRoomId: dto.chatRoomId || uuidv4(),
+              },
+            });
+          }
         });
       } catch (error) {
         this.logger.error(`Failed to save event "${dto.title}":`, error);
