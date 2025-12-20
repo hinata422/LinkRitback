@@ -10,6 +10,7 @@ import { UserController } from './controller/user.controller';
 import { EventController } from './controller/event.controller';
 import { EventEditedController } from './controller/event-edited.controller';
 import { TestMbtiController } from './controller/test-mbti.controller';
+import { AppController } from './app.controller';
 
 import { UserService } from './service/user.service';
 import { EventService } from './service/event.service';
@@ -33,6 +34,7 @@ import { TYPES } from '../common/Types';
     ScrapingModule,
   ],
   controllers: [
+    AppController,
     UserController,
     EventController,
     EventEditedController,
