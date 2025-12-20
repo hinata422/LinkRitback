@@ -1,9 +1,39 @@
-import { Controller, Get, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Query } from '@nestjs/common';
 import { EventEditedService } from '../service/event-edited.service';
+import { randomUUID } from 'crypto';
 
 @Controller('api/events-edited')
 export class EventEditedController {
     constructor(private readonly eventEditedService: EventEditedService) { }
+
+    /**
+     * POST /api/events-edited
+     * MBTI別イベント説明を作成/更新
+     */
+    @Post()
+    async create(@Body() body: {
+        event_id: string;
+        mbti_type: string;
+        detail_edited: string;
+    }) {
+        if (!body.event_id || !body.mbti_type || !body.detail_edited) {
+            return {
+                error: 'event_id, mbti_type, detail_edited パラメータが必要です',
+            };
+        }
+
+        const result = await this.eventEditedService.upsert({
+            id: randomUUID(), // UUIDを自動生成
+            event_id: body.event_id,
+            mbti_type: body.mbti_type as any, // MBTITypeにキャスト
+            detail_edited: body.detail_edited,
+        } as any);
+
+        return {
+            success: true,
+            data: result,
+        };
+    }
 
     /**
      * GET /api/events-edited?event_id=xxx&mbti_type=xxx

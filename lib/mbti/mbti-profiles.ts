@@ -101,3 +101,6 @@ export const MBTI_PROFILES = {
 };
 
 export const MBTI_TYPES = Object.keys(MBTI_PROFILES) as Array<keyof typeof MBTI_PROFILES>;
+
+// MBTIタイプのユニオン型（enumと互換性あり）
+export type MBTIType = keyof typeof MBTI_PROFILES;

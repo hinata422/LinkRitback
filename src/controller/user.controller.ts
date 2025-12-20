@@ -1,5 +1,6 @@
 import { Controller, Get, Post, Put, Param, Body } from '@nestjs/common';
 import { UserService } from '../service/user.service';
+import { randomUUID } from 'crypto';
 
 @Controller('api/users')
 export class UserController {
@@ -18,6 +19,7 @@ export class UserController {
   }) {
     // APIのsnake_caseをRepositoryのsnake_caseに変換
     const userData = {
+      uid: randomUUID(), // UUIDを自動生成
       link_user_code: body.link_user_code,
       name: body.name,
       mbti_type: body.mbti_type,

@@ -1,11 +1,15 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { EventRepository } from '../event.repo';
 
 @Injectable()
 export class EventRepositoryImpl implements EventRepository {
   private readonly client: SupabaseClient;
-  constructor(supabaseClient: SupabaseClient) {
+  constructor(@Inject(SupabaseClient) supabaseClient: SupabaseClient) {
+    console.log('🔍 EventRepositoryImpl constructor:', {
+      hasClient: !!supabaseClient,
+      clientType: typeof supabaseClient,
+    });
     this.client = supabaseClient;
   }
 
@@ -31,12 +35,12 @@ export class EventRepositoryImpl implements EventRepository {
   }
 
   async findByMBTI(mbtiType: string) {
-    // MVPでは全イベントを返す（後でMBTI別フィルタリングロジックを追加可能）
+    // MVPでは全イベントを返す（後でMBTI別フィルタリングロジックを実装可能）
     // TODO: event_mbti_id テーブルを使った関連付けを実装
     const { data, error } = await this.client
       .from('events')
       .select('*')
-      .order('date', { ascending: true });
+      .order('scraped_at', { ascending: false }); // 最新のイベントを上に
 
     if (error) throw error;
     return data || [];

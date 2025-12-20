@@ -1,5 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
-import type { EventEditedRepository } from '../repository/event-edited/event-edited.repo';
+import { EventEditedRepository } from '../repository/event-edited/event-edited.repo';
+import { MBTIType } from '../../lib/mbti/mbti-profiles';
 import { TYPES } from '../../common/Types';
 
 @Injectable()
@@ -15,7 +16,7 @@ export class EventEditedService {
     }
 
     // MBTI別イベント情報を保存/更新（RAGバッチ処理で使用）
-    async upsert(data: { events_id: string; mbti_type: string; detail_edited: string }) {
+    async upsert(data: { event_id: string; mbti_type: MBTIType; detail_edited: string }) {
         return await this.eventEditedRepo.upsert(data);
     }
 }
